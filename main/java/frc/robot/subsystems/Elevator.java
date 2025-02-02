@@ -1,0 +1,75 @@
+package frc.robot.subsystems;
+
+import edu.wpi.first.wpilibj2.command.SubsystemBase;
+
+import com.revrobotics.spark.SparkClosedLoopController;
+import com.revrobotics.spark.SparkMax;
+import com.revrobotics.spark.SparkBase.ControlType;
+import com.revrobotics.spark.SparkBase.PersistMode;
+import com.revrobotics.spark.SparkLowLevel.MotorType;
+import com.revrobotics.spark.config.SparkMaxConfig;
+import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
+
+import frc.robot.Constants;
+
+public class Elevator extends SubsystemBase {
+    // Order of setpoint encoder values: L1, L2, L3, L4, Net scoring
+    private double[] stages = {0, 0, 5.199061474, 20.84762925, 21.95470703};
+    private int elevatorID1 = Constants.ClimbConstants.climbID1;
+    private int elevatorID2 = Constants.ClimbConstants.climbID2;
+
+    private SparkMax elevator1;
+    private SparkMax elevator2;
+    
+    private SparkMaxConfig elevatorConfig1;
+    private SparkMaxConfig elevatorConfig2;
+
+    private SparkClosedLoopController elevatorController;
+
+    public Elevator() {
+        elevator2 = new SparkMax(elevatorID2, MotorType.kBrushless);
+        elevator1 = new SparkMax(elevatorID1, MotorType.kBrushless);
+
+        elevatorConfig1 = new SparkMaxConfig();
+        elevatorConfig2 = new SparkMaxConfig();
+
+
+        elevatorController = elevator1.getClosedLoopController();
+
+
+        //need not apply PIDF to motor2, as it will follow leader motor1
+        elevatorConfig1
+            .smartCurrentLimit(80)
+            .idleMode(IdleMode.kBrake)
+            //init-ing pidf values (change thru constants file)
+            .closedLoop
+                .pidf
+                (
+                    Constants.ClimbConstants.climb_P, 
+                    Constants.ClimbConstants.climb_I, 
+                    Constants.ClimbConstants.climb_D, 
+                    Constants.ClimbConstants.climb_FF
+                )
+                .outputRange(0,1);
+        //applying configs motor2, make sure this one is INVERTED (robot will break?)
+        elevatorConfig2
+            .smartCurrentLimit(80)
+            .idleMode(IdleMode.kBrake)
+            .follow(elevatorID1, true);
+
+        //applying configs to motors
+        elevator1.configure(elevatorConfig1,com.revrobotics.spark.SparkBase.ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
+        elevator2.configure(elevatorConfig2,com.revrobotics.spark.SparkBase.ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
+    }
+    
+    public void changeStage(int stageIndex) {
+        elevatorController.setReference(stages[stageIndex], ControlType.kPosition);
+    }
+
+    public double getPosition()
+    {
+        return elevator1.getEncoder().getPosition();
+    }
+}
+
+
