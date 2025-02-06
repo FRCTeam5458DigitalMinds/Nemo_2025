@@ -36,9 +36,9 @@ public final class Constants {
 
         //given in radians, inches respectively
 
-        //32,6 deg op 2
-        public static final double limelightMountingAngle = .546; 
-        public static final double limelightMountingHeight = 6.3; 
+        //32.6 deg op 2
+        public static final double limelightMountingAngle = .546;
+        public static final double limelightMountingHeight = .16002; 
         
     }
 

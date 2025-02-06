@@ -14,7 +14,7 @@ public class Limelight extends SubsystemBase
     long tag_ID;
     double y_AngleOffsetRads;
     double distance;
-    double reefTagHeightInches = 12.125; 
+    double reefTagHeightInches = 0.307975; 
   
 
     public Limelight()
@@ -51,15 +51,20 @@ public class Limelight extends SubsystemBase
 
         //double angle = Constants.LimelightConstants.limelightMountingAngle + m_y_AngleOffset*(Math.PI/180);
 
-        y_AngleOffsetRads = m_y_AngleOffset * (Math.PI/180);
-        
-        distance = ((reefTagHeightInches - Constants.LimelightConstants.limelightMountingHeight) // from mid??
-        / Math.tan(Constants.LimelightConstants.limelightMountingAngle + y_AngleOffsetRads)); 
-        
-    
+        if (!hasValidTarget())
+        {
+            return 0;
+        }
 
-        // TO DO: SUBTRACT DIST FROM LENS TO BUMPER
-        
+        if (hasValidTarget())
+        {
+            y_AngleOffsetRads = m_y_AngleOffset * (Math.PI/180);
+            
+            distance = ((reefTagHeightInches - Constants.LimelightConstants.limelightMountingHeight) // from mid??
+            / Math.tan(Constants.LimelightConstants.limelightMountingAngle + y_AngleOffsetRads)); 
+            
+            // TO DO: SUBTRACT DIST FROM LENS TO BUMPER
+        }
         SmartDashboard.putNumber("Dist to Tag", distance);
         //SmartDashboard.putNumber("Angle", angle);
         
@@ -70,14 +75,17 @@ public class Limelight extends SubsystemBase
     public double strafeOffset()// strafe distance (from limelight lens/center of robot)
     {
         updateLimelightTracking();
-
+        
+        if (!hasValidTarget())
+        {
+            return 0;
+        }
         double distanceToTag = distToTag();
 
         double x_AngleOffsetRads = m_x_AngleOffset*(Math.PI/180);
 
         double strafe = distanceToTag * Math.tan(x_AngleOffsetRads);
 
-        double angle = x_AngleOffsetRads; // for testing
 
         SmartDashboard.putNumber("Strafe", strafe);
        
@@ -85,9 +93,14 @@ public class Limelight extends SubsystemBase
     }
 
     public double rotationOffset() //rotational offset
-    {
-
+    {   
         updateLimelightTracking();
+
+        if (!hasValidTarget())
+        {
+            return 0;
+        }
+
         return m_x_AngleOffset;
     }
 

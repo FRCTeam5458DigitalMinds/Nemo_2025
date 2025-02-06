@@ -10,6 +10,7 @@ import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 
 import edu.wpi.first.math.controller.PIDController;
+import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -91,13 +92,15 @@ public class RobotContainer {
         */
 
         //CHANGE SPECIFIC LEFT
-        
-        driverController.leftBumper().whileTrue(
-            drivetrain.applyRequest(() ->
-            drive.withVelocityX(-drivePID.calculate(LIMELIGHT.distToTag(), driveOffset))
-                .withVelocityY(strafePID.calculate(LIMELIGHT.strafeOffset(), strafeOffset))
-            )
+       
+        driverController.leftBumper().onTrue(
+            drivetrain.generatePath(new Pose2d(LIMELIGHT.distToTag(), LIMELIGHT.strafeOffset(), new Rotation2d(LIMELIGHT.rotationOffset())))
         );
+
+        driverController.rightBumper().onTrue(
+            drivetrain.generatePath(new Pose2d(0.5, 0.5, new Rotation2d(0)))
+        );
+
         //driverController.a().whileTrue(drivetrain.applyRequest(() -> brake));
         //driverController.b().whileTrue(drivetrain.applyRequest(() ->
         //    point.withModuleDirection(new Rotation2d(-driverController.getLeftY(), -driverController.getLeftX()))
