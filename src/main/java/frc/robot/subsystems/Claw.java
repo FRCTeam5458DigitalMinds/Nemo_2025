@@ -58,7 +58,7 @@ public class Claw extends SubsystemBase
     {
         return clawTOF.getDistance().getValueAsDouble();
     }
-    
+
     public void customPosition(double setPoint)
     {
         clawRotate.setControl(m_request.withPosition(setPoint).withSlot(0));

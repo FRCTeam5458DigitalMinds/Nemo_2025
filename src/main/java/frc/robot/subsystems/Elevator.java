@@ -36,7 +36,6 @@ public class Elevator extends SubsystemBase {
 
         elevatorController = elevator1.getClosedLoopController();
 
-
         //need not apply PIDF to motor2, as it will follow leader motor1
         elevatorConfig1
             .smartCurrentLimit(80)
@@ -50,8 +49,9 @@ public class Elevator extends SubsystemBase {
                     Constants.ClimbConstants.climb_D, 
                     Constants.ClimbConstants.climb_FF
                 )
-                .outputRange(0,1);
-        //applying configs motor2, make sure this one is INVERTED (robot will break?)
+                .outputRange(-1, 1);
+
+        //applying configs motor2, make sure this one is INVERTED (robot will break)
         elevatorConfig2
             .smartCurrentLimit(80)
             .idleMode(IdleMode.kBrake)
@@ -62,7 +62,8 @@ public class Elevator extends SubsystemBase {
         elevator2.configure(elevatorConfig2,com.revrobotics.spark.SparkBase.ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
     }
     
-    public void changeStage(int stageIndex) {
+    public void changeStage(int stageIndex) 
+    {
         elevatorController.setReference(stages[stageIndex], ControlType.kPosition);
     }
 

@@ -73,43 +73,54 @@ public class RobotContainer {
             )
         );
 
+        //this auto intaking needs to be fixed
+        //eg. claw needs to be seperated into roller spinny and claw rotate b/c default command will interrupt rotate
+
         //CLAW.setDefaultCommand(autoIntake());
         
-        testController.a().onTrue(new testMotors(ELEVATOR, CLAW, false, false));
+        //testing controller (drag controller usb # on port list to #3) will activate claw/elevator motors 
+        //depending on button
+        testController.a().whileTrue(new testMotors(ELEVATOR, CLAW, false, false));
         testController.a().onFalse(new testMotors(ELEVATOR, CLAW, false, true));
 
-        testController.b().onTrue(new testMotors(ELEVATOR, CLAW, true, false));
+        testController.b().whileTrue(new testMotors(ELEVATOR, CLAW, true, false));
         testController.b().onFalse(new testMotors(ELEVATOR, CLAW, true, true));
 
 
-        //CHANGE SPECIFIC LEFT
-
+        //left needs to be made relative, but right isn't working (test case), thus, don't touch yet
         driverController.leftBumper().onTrue(
-         drivetrain.generatePath(new Pose2d(LIMELIGHT.distToTag(), LIMELIGHT.strafeOffset(), new Rotation2d(LIMELIGHT.rotationOffset())))
+            drivetrain.generatePath(new Pose2d(LIMELIGHT.distToTag(), LIMELIGHT.strafeOffset(), new Rotation2d(LIMELIGHT.rotationOffset())))
         );
 
-        driverController.leftBumper().onTrue(
+        driverController.rightBumper().onTrue(
             drivetrain.generatePath(new Pose2d(0.5, 0.5, new Rotation2d(0.7)).relativeTo(drivetrain.getPose()))
         );
 
+        //commented out b/c using these buttons for otherwise
         //driverController.a().whileTrue(drivetrain.applyRequest(() -> brake));
         //driverController.b().whileTrue(drivetrain.applyRequest(() ->
         //    point.withModuleDirection(new Rotation2d(-driverController.getLeftY(), -driverController.getLeftX()))
         //));
 
+        //these should only be run at max once per enable
         driverController.back().and(driverController.y()).whileTrue(drivetrain.sysIdDynamic(Direction.kForward));
         driverController.back().and(driverController.x()).whileTrue(drivetrain.sysIdDynamic(Direction.kReverse));
         driverController.start().and(driverController.y()).whileTrue(drivetrain.sysIdQuasistatic(Direction.kForward));
         driverController.start().and(driverController.x()).whileTrue(drivetrain.sysIdQuasistatic(Direction.kReverse));
 
+        //the () is a boolean supplier, this will constantly update (necessary) and return true if piece detected
+        //the commands w/ ands will only run if both conditions are true, thus we can use the a button twice
         driverController.a().and(() -> CLAW.pieceDetected()).onTrue(new ReefScoring(CLAW, ELEVATOR, 1)); 
         driverController.x().onTrue(new ReefScoring(CLAW, ELEVATOR, 2)); 
         
         driverController.y().and(() -> CLAW.pieceDetected()).onTrue(new ReefScoring(CLAW, ELEVATOR, 3));
         driverController.b().onTrue(new ReefScoring(CLAW, ELEVATOR, 4)); 
 
+        //this is the operator controller, this is NOT a duplicate, but rather a 2nd controller
+        //to get an operator controller either plug in 2 controllers or drag the main one to USB port #1 in the USB menu
         operatorController.a().and(() -> CLAW.pieceDetected()).onTrue(new ReefScoring(CLAW, ELEVATOR, 1)); 
         operatorController.x().onTrue(new ReefScoring(CLAW, ELEVATOR, 2)); 
+        
         operatorController.y().and(() -> CLAW.pieceDetected()).onTrue(new ReefScoring(CLAW, ELEVATOR, 3));
         operatorController.b().onTrue(new ReefScoring(CLAW, ELEVATOR, 4)); 
 
@@ -122,7 +133,6 @@ public class RobotContainer {
         driverController.povLeft().onTrue(new StowElevatorClaw(ELEVATOR, CLAW));
        
         driverController.start().onTrue(drivetrain.runOnce(() -> drivetrain.seedFieldCentric()));
-
         drivetrain.registerTelemetry(logger::telemeterize);
     }
 
