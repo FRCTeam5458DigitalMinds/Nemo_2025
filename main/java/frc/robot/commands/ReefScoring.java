@@ -13,6 +13,7 @@ public class ReefScoring extends Command
     public ReefScoring(Claw claw, Elevator elevator, int level) 
     {
         this.CLAW = claw;
+        this.ELEVATOR = elevator;
         this.LEVEL = level;
 
         addRequirements(claw);
@@ -20,18 +21,24 @@ public class ReefScoring extends Command
 
     }
 
-    //Initializes stuff 
     public void initialize()
     {
         CLAW.toPosition(1);        
     }
 
+    
     public void execute()
     {
-        if (CLAW.getPosition() < 20)
+        //if (CLAW.getPosition() > 20)
+        if (CLAW.checkSetpoint(1))
         {
             ELEVATOR.changeStage(LEVEL);
-            //drive conditional here
         }
+    }
+
+    public boolean isFinished()
+    {
+        
+        return true;
     }
 }

@@ -15,6 +15,8 @@ import frc.robot.Constants;
 public class Elevator extends SubsystemBase {
     // Order of setpoint encoder values: L1, L2, L3, L4, Net scoring
     private double[] stages = {0, 0, 5.199061474, 20.84762925, 21.95470703};
+    private double errorRange = 0.5;
+    
     private int elevatorID1 = Constants.ClimbConstants.climbID1;
     private int elevatorID2 = Constants.ClimbConstants.climbID2;
 
@@ -36,10 +38,10 @@ public class Elevator extends SubsystemBase {
 
         elevatorController = elevator1.getClosedLoopController();
 
-
         //need not apply PIDF to motor2, as it will follow leader motor1
         elevatorConfig1
             .smartCurrentLimit(80)
+            .inverted(true)
             .idleMode(IdleMode.kBrake)
             //init-ing pidf values (change thru constants file)
             .closedLoop
@@ -50,8 +52,9 @@ public class Elevator extends SubsystemBase {
                     Constants.ClimbConstants.climb_D, 
                     Constants.ClimbConstants.climb_FF
                 )
-                .outputRange(0,1);
-        //applying configs motor2, make sure this one is INVERTED (robot will break?)
+                .outputRange(-1, 1);
+
+        //applying configs motor2, make sure this one is INVERTED (robot will break)
         elevatorConfig2
             .smartCurrentLimit(80)
             .idleMode(IdleMode.kBrake)
@@ -62,13 +65,32 @@ public class Elevator extends SubsystemBase {
         elevator2.configure(elevatorConfig2,com.revrobotics.spark.SparkBase.ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
     }
     
-    public void changeStage(int stageIndex) {
+    public void changeStage(int stageIndex) 
+    {
         elevatorController.setReference(stages[stageIndex], ControlType.kPosition);
+    }
+
+    public boolean checkStage(int stage)
+    {
+        if (getPosition() < stages[stage] + errorRange && getPosition() > stages[stage] - errorRange)
+        {
+            return true;
+        }
+
+        return false;
     }
 
     public double getPosition()
     {
         return elevator1.getEncoder().getPosition();
+    }
+    public boolean checkL4()
+    {
+        if (getPosition() > 20 && getPosition() < 21)
+        {
+            return true;
+        }
+        return false;
     }
 }
 

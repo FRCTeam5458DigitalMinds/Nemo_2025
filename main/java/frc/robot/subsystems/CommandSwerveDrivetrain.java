@@ -164,6 +164,10 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
 
     }
 
+    public Pose2d getPose()
+    {
+        return getState().Pose;
+    }
     private void configureAutoBuilder() {
         try {
             var config = RobotConfig.fromGUISettings();
@@ -200,7 +204,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
 
         // Create the path using the waypoints created above
         PathPlannerPath path = new PathPlannerPath(
-                PathPlannerPath.waypointsFromPoses(new Pose2d(0, 0, new Rotation2d(0)), waypoint),
+                PathPlannerPath.waypointsFromPoses(new Pose2d(0.0, 0.0, new Rotation2d(0)), waypoint),
                 constraints,
                 null, // The ideal starting state, this is only relevant for pre-planned paths, so can be null for on-the-fly paths.
                 new GoalEndState(0.0, Rotation2d.fromDegrees(0)) // Goal end state. You can set a holonomic rotation here. If using a differential drivetrain, the rotation will have no effect.
@@ -211,6 +215,19 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         path);
     }
 
+    /* 
+    public Command autoAlignCommand(Pose2d waypoint)
+    {
+        PathConstraints constraints = PathConstraints.unlimitedConstraints(12.0);
+
+        Command pathfinding = AutoBuilder.pathfindToPose(
+            waypoint,
+            constraints,
+            0.0
+        );
+
+        return pathfinding;
+    } */
     /**
      * Constructs a CTRE SwerveDrivetrain using the specified constants.
      * <p>
@@ -278,13 +295,6 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
 
     @Override
     public void periodic() {
-        /*
-         * Periodically try to apply the operator perspective.
-         * If we haven't applied the operator perspective before, then we should apply it regardless of DS state.
-         * This allows us to correct the perspective in case the robot code restarts mid-match.
-         * Otherwise, only check and apply the operator perspective if the DS is disabled.
-         * This ensures driving behavior doesn't change until an explicit disable event occurs during testing.
-         */
         if (!m_hasAppliedOperatorPerspective || DriverStation.isDisabled()) {
             DriverStation.getAlliance().ifPresent(allianceColor -> {
                 setOperatorPerspectiveForward(

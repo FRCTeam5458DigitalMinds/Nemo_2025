@@ -106,10 +106,7 @@ public class Limelight extends SubsystemBase
 
     public boolean onTarget()
     {
-        if (strafeOffset() <= .5 || rotationOffset() <= .5) // TO DO: test error margin
-        {
-            return true;
-        }
+        
 
         return false;
     }

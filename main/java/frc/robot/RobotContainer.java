@@ -9,23 +9,24 @@ import static edu.wpi.first.units.Units.*;
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 
-import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
-import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
 import frc.robot.commands.ReefScoring;
 import frc.robot.commands.IntakeAlgae;
+import frc.robot.commands.Lift;
 import frc.robot.commands.RemoveAlgae;
-
+import frc.robot.commands.testMotors;
 import frc.robot.commands.StowElevatorClaw;
-import frc.robot.commands.Test;
+import frc.robot.commands.TestRotation;
 import frc.robot.commands.NetScore;
 import frc.robot.commands.ProcessorScore;
+import frc.robot.commands.AutoIntake;
+import frc.robot.commands.Dunk;
+import frc.robot.commands.Eject;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.Claw;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
@@ -42,23 +43,20 @@ public class RobotContainer {
             .withDeadband(MaxSpeed * 0.1).withRotationalDeadband(MaxAngularRate * 0.1) // Add a 10% deadband
             .withDriveRequestType(DriveRequestType.OpenLoopVoltage); // Use open-loop control for drive motors
             
-    private final SwerveRequest.SwerveDriveBrake brake = new SwerveRequest.SwerveDriveBrake();
-    private final SwerveRequest.PointWheelsAt point = new SwerveRequest.PointWheelsAt();
+    //private final SwerveRequest.SwerveDriveBrake brake = new SwerveRequest.SwerveDriveBrake();
+    //private final SwerveRequest.PointWheelsAt point = new SwerveRequest.PointWheelsAt();
 
     private final Telemetry logger = new Telemetry(MaxSpeed);
 
-    private final CommandXboxController driverController = new CommandXboxController(0);
+    private final CommandXboxController driverController = new CommandXboxController(2);
     private final CommandXboxController operatorController = new CommandXboxController(1);
-    
+    private final CommandXboxController testController = new CommandXboxController(0);
+
     public final CommandSwerveDrivetrain drivetrain = TunerConstants.createDrivetrain();
 
-    private final PIDController drivePID = new PIDController(0.1, 0, 0.);
-    private final PIDController strafePID = new PIDController(0.1, 0, 0);
-    private final PIDController rotationPID = new PIDController(0.1, 0, 0);
-
-    private final int driveOffset = 10;
-    private final int angleOffset = 0;
-    private final double strafeOffset = 6.5;
+    //private final int driveOffset = 10;
+    //private final int angleOffset = 0;
+    //private final double strafeOffset = 6.5;
 
     private final Elevator ELEVATOR = new Elevator();
     private final Intake INTAKE = new Intake();
@@ -70,8 +68,8 @@ public class RobotContainer {
     }
 
     private void configureBindings() {
-        // Note that X is defined as forward according to WPILib convention,
-        // and Y is defined as to the left according to WPILib convention.
+
+        //DRIVE COMMANDS
         drivetrain.setDefaultCommand(
             // Drivetrain will execute this command periodically
             drivetrain.applyRequest(() ->
@@ -81,71 +79,47 @@ public class RobotContainer {
             )
         );
 
-        //CLAW.setDefaultCommand(autoIntake());
-        /*
-        driverController.leftBumper().whileTrue(
-            drivetrain.applyRequest(() ->
-            drive.withVelocityX(drivePID.calculate(driveOffset, driveOffset))
-                .withVelocityY(strafePID.calculate(driverController.getRawAxis(2) * 10, strafeOffset))
-                .withRotationalDeadband(rotationPID.calculate(angleOffset, angleOffset)))
-        );
-        */
-
-        //CHANGE SPECIFIC LEFT
-       
-        driverController.leftBumper().onTrue(
-            drivetrain.generatePath(new Pose2d(LIMELIGHT.distToTag(), LIMELIGHT.strafeOffset(), new Rotation2d(LIMELIGHT.rotationOffset())))
+        driverController.leftBumper().and(() -> LIMELIGHT.hasValidTarget()).onTrue(
+            drivetrain.generatePath(new Pose2d(LIMELIGHT.distToTag(), LIMELIGHT.strafeOffset(), new Rotation2d(LIMELIGHT.rotationOffset())).relativeTo(drivetrain.getPose()))
         );
 
-        driverController.rightBumper().onTrue(
-            drivetrain.generatePath(new Pose2d(0.5, 0.5, new Rotation2d(0)))
-        );
-
-        //driverController.a().whileTrue(drivetrain.applyRequest(() -> brake));
-        //driverController.b().whileTrue(drivetrain.applyRequest(() ->
-        //    point.withModuleDirection(new Rotation2d(-driverController.getLeftY(), -driverController.getLeftX()))
-        //));
-
-        // Run SysId routines when holding back/start and X/Y.
-        // Note that each routine should be run exactly once in a single log.
         driverController.back().and(driverController.y()).whileTrue(drivetrain.sysIdDynamic(Direction.kForward));
         driverController.back().and(driverController.x()).whileTrue(drivetrain.sysIdDynamic(Direction.kReverse));
         driverController.start().and(driverController.y()).whileTrue(drivetrain.sysIdQuasistatic(Direction.kForward));
         driverController.start().and(driverController.x()).whileTrue(drivetrain.sysIdQuasistatic(Direction.kReverse));
+        driverController.start().onTrue(drivetrain.runOnce(() -> drivetrain.seedFieldCentric()));
+        drivetrain.registerTelemetry(logger::telemeterize);
 
-        // reset the field-centric heading on left bumper press
-        //driverController.leftBumper().onTrue(drivetrain.runOnce(() -> drivetrain.seedFieldCentric()));
-        //ADD AND FOR LIMELIGHT "IN POSITION"???? DRIVETRAIN LIMELIGHT CODE
-        driverController.a().and(() -> CLAW.pieceDetected()).onTrue(new ReefScoring(CLAW, ELEVATOR, 1)); 
-        driverController.x().onTrue(new ReefScoring(CLAW, ELEVATOR, 2)); 
-        
-        driverController.y().and(() -> CLAW.pieceDetected()).onTrue(new ReefScoring(CLAW, ELEVATOR, 3));
-        driverController.b().onTrue(new ReefScoring(CLAW, ELEVATOR, 4)); 
+        CLAW.setDefaultCommand(new AutoIntake(CLAW));
 
-        // TEST
-        //driverController.b().onTrue(new Test(LIMELIGHT));
-
-        /* duplicate?
-        operatorController.a().and(() -> CLAW.pieceDetected()).onTrue(new ReefScoring(CLAW, ELEVATOR, 1)); 
-        operatorController.x().onTrue(new ReefScoring(CLAW, ELEVATOR, 2)); 
-        operatorController.y().and(() -> CLAW.pieceDetected()).onTrue(new ReefScoring(CLAW, ELEVATOR, 3));
-        operatorController.b().onTrue(new ReefScoring(CLAW, ELEVATOR, 4)); 
-        */
+        driverController.a().and(() -> CLAW.pieceDetected()).onTrue(new ReefScoring(CLAW, ELEVATOR, 1).andThen(new Eject(CLAW))); 
+        driverController.x().onTrue(new ReefScoring(CLAW, ELEVATOR, 2).andThen(new Eject(CLAW))); 
+        driverController.y().and(() -> CLAW.pieceDetected()).onTrue(new ReefScoring(CLAW, ELEVATOR, 3).andThen(new Eject(CLAW)));
+        driverController.b().onTrue(new ReefScoring(CLAW, ELEVATOR, 4).andThen(new Dunk(CLAW)).andThen(new Eject(CLAW)).andThen(new Lift(CLAW)));
 
         driverController.a().and(() -> !CLAW.pieceDetected()).onTrue(new RemoveAlgae(CLAW, ELEVATOR, 1));
         driverController.y().and(() -> !CLAW.pieceDetected()).onTrue(new RemoveAlgae(CLAW, ELEVATOR, 3));        
 
-        driverController.rightTrigger().whileTrue(new IntakeAlgae(CLAW, INTAKE));
-        driverController.povUp().onTrue(new NetScore(CLAW, INTAKE, ELEVATOR));
-        driverController.povRight().onTrue(new ProcessorScore(INTAKE));
+        //driverController.rightTrigger().whileTrue(new IntakeAlgae(CLAW, INTAKE));
+        //driverController.povUp().onTrue(new NetScore(CLAW, INTAKE, ELEVATOR));
+        //driverController.povRight().onTrue(new ProcessorScore(INTAKE));
         driverController.povLeft().onTrue(new StowElevatorClaw(ELEVATOR, CLAW));
-       
-        driverController.start().onTrue(drivetrain.runOnce(() -> drivetrain.seedFieldCentric()));
 
+        testController.a().whileTrue(new testMotors(ELEVATOR, CLAW, false, false,false));
+        testController.a().onFalse(new testMotors(ELEVATOR, CLAW, false, true,false));
+        testController.b().whileTrue(new testMotors(ELEVATOR, CLAW, true, false,false));
+        testController.b().onFalse(new testMotors(ELEVATOR, CLAW, true, true,false));
+        testController.x().whileTrue(new testMotors(ELEVATOR, CLAW, false, false, true));
+        testController.x().onFalse(new testMotors(ELEVATOR, CLAW, false, true,true));
+        testController.y().whileTrue(new TestRotation(CLAW, true));
+        testController.y().onFalse(new TestRotation(CLAW, true));
 
-        drivetrain.registerTelemetry(logger::telemeterize);
-
-
+        //this is the operator controller, this is NOT a duplicate, but rather a 2nd controller
+        //to get an operator controller either plug in 2 controllers or drag the main one to USB port #1 in the USB menu
+        operatorController.a().and(() -> CLAW.pieceDetected()).onTrue(new ReefScoring(CLAW, ELEVATOR, 1)); 
+        operatorController.x().onTrue(new ReefScoring(CLAW, ELEVATOR, 2)); 
+        operatorController.y().and(() -> CLAW.pieceDetected()).onTrue(new ReefScoring(CLAW, ELEVATOR, 3));
+        operatorController.b().onTrue(new ReefScoring(CLAW, ELEVATOR, 4)); 
     }
 
     public Command getAutonomousCommand() {
