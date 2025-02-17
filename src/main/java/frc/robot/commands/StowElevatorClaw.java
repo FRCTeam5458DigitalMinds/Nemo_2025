@@ -2,7 +2,7 @@ package frc.robot.commands;
 
 import frc.robot.subsystems.Claw;
 import frc.robot.subsystems.Elevator;
-
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 
 public class StowElevatorClaw extends Command {
@@ -27,16 +27,21 @@ public class StowElevatorClaw extends Command {
 
     public void execute()
     {
-        if (ELEVATOR.getPosition() < 1)
-        {
-            isFinished();
-        }
+        SmartDashboard.putNumber("Claw Pos", CLAW.getPosition());
+
+        isFinished();
     }
+    
 
     public boolean isFinished()
     {
-        CLAW.toPosition(0);
-        return true;
+        if (ELEVATOR.getPosition() < 1)
+        {
+            CLAW.toPosition(0);
+            return true;
+        }
+        return false;
     }
-
 }
+
+

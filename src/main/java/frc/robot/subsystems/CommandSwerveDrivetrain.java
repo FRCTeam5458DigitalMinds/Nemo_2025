@@ -1,9 +1,7 @@
 package frc.robot.subsystems;
 
 import static edu.wpi.first.units.Units.*;
-
 import java.util.function.Supplier;
-
 import com.ctre.phoenix6.SignalLogger;
 import com.ctre.phoenix6.Utils;
 import com.ctre.phoenix6.swerve.SwerveDrivetrainConstants;
@@ -26,6 +24,8 @@ import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.Notifier;
 import edu.wpi.first.wpilibj.RobotController;
+import edu.wpi.first.wpilibj.smartdashboard.Field2d;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
@@ -49,11 +49,18 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     /* Keep track if we've ever applied the operator perspective before or not */
     private boolean m_hasAppliedOperatorPerspective = false;
 
+    private final Field2d m_field = new Field2d();
+
     /* Swerve requests to apply during SysId characterization */
     private final SwerveRequest.SysIdSwerveTranslation m_translationCharacterization = new SwerveRequest.SysIdSwerveTranslation();
     private final SwerveRequest.SysIdSwerveSteerGains m_steerCharacterization = new SwerveRequest.SysIdSwerveSteerGains();
     private final SwerveRequest.SysIdSwerveRotation m_rotationCharacterization = new SwerveRequest.SysIdSwerveRotation();
 
+    public Pose2d getPose()
+    {
+        return getState().Pose;
+    }
+    
     /* SysId routine for characterizing translation. This is used to find PID gains for the drive motors. */
     private final SysIdRoutine m_sysIdRoutineTranslation = new SysIdRoutine(
         new SysIdRoutine.Config(
@@ -134,6 +141,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         if (Utils.isSimulation()) {
             startSimThread();
         }
+        SmartDashboard.putData("Field", m_field);
         configureAutoBuilder();
     }
 
@@ -160,14 +168,12 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         if (Utils.isSimulation()) {
             startSimThread();
         }
+        SmartDashboard.putData("Field", m_field);
         configureAutoBuilder();
 
     }
 
-    public Pose2d getPose()
-    {
-        return getState().Pose;
-    }
+    
     private void configureAutoBuilder() {
         try {
             var config = RobotConfig.fromGUISettings();
@@ -200,19 +206,19 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     public Command generatePath(Pose2d waypoint)
     {
         //PathConstraints constraints = new PathConstraints(0.5, 0.25, .05 * Math.PI, .1 * Math.PI); // The constraints for this path.
-        PathConstraints constraints = PathConstraints.unlimitedConstraints(12.0); // You can also use unlimited constraints, only limited by motor torque and nominal battery voltage
+        PathConstraints constraints = new PathConstraints(1, 1, 1, 1); // You can also use unlimited constraints, only limited by motor torque and nominal battery voltage
 
         // Create the path using the waypoints created above
         PathPlannerPath path = new PathPlannerPath(
-                PathPlannerPath.waypointsFromPoses(waypoint, waypoint),
-                constraints,
-                null, // The ideal starting state, this is only relevant for pre-planned paths, so can be null for on-the-fly paths.
-                new GoalEndState(0.0, Rotation2d.fromDegrees(0)) // Goal end state. You can set a holonomic rotation here. If using a differential drivetrain, the rotation will have no effect.
+            PathPlannerPath.waypointsFromPoses(getPose(), waypoint),
+            constraints,
+            null, // The ideal starting state, this is only relevant for pre-planned paths, so can be null for on-the-fly paths.
+            new GoalEndState(0.0, Rotation2d.fromDegrees(0)) // Goal end state. You can set a holonomic rotation here. If using a differential drivetrain, the rotation will have no effect.
         );
-        path.preventFlipping = true;
-
+        
         return AutoBuilder.followPath(
-        path);
+            path
+        );
     }
 
     /* 
@@ -295,6 +301,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
 
     @Override
     public void periodic() {
+        m_field.setRobotPose(getPose());
         if (!m_hasAppliedOperatorPerspective || DriverStation.isDisabled()) {
             DriverStation.getAlliance().ifPresent(allianceColor -> {
                 setOperatorPerspectiveForward(

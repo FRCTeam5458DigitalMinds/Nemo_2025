@@ -1,19 +1,25 @@
 package frc.robot.subsystems;
 
+import com.ctre.phoenix6.configs.MotorOutputConfigs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.PositionVoltage;
 import com.ctre.phoenix6.hardware.*;
+import com.ctre.phoenix6.signals.InvertedValue;
+
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
 
 public class Claw extends SubsystemBase
 {
     // Order of setpoint encoder values: L1(placeholder), L2, L3, L4, Net scoring
-    private double[] setPoints = {0, 25.28395062, 25.28395062, 21.33333333, 20.54320988}; // 0 is placeholder for L1 (NOT YET DESIGNED)
+    private double[] setPoints = {0, 8, 25.28395062, 25.28395062, 21.33333333, 20.54320988, 30}; // 0 is placeholder for L1 (NOT YET DESIGNED)
+    private double errorRange = 0.25;
 
     private TalonFX clawRotate;
     private TalonFX clawSpin;
     private CANrange clawTOF;
+    private TalonFX clawFunnel;
+    private InvertedValue CounterClockwise_Positive = InvertedValue.Clockwise_Positive;
     
     // line below potentially incorrect; poition voltage construtor parameter 
     private final PositionVoltage m_request = new PositionVoltage(0).withSlot(0);
@@ -23,14 +29,19 @@ public class Claw extends SubsystemBase
         clawRotate = new TalonFX(Constants.ClawConstants.clawID1);
         clawSpin = new TalonFX(Constants.ClawConstants.clawID2);
         clawTOF = new CANrange(Constants.ClawConstants.canRangeID);
+        clawFunnel = new TalonFX(Constants.ClawConstants.clawID3);
 
+        
         clawRotate.getConfigurator().apply(new TalonFXConfiguration());
         clawSpin.getConfigurator().apply(new TalonFXConfiguration());
+        clawFunnel.getConfigurator().apply(new TalonFXConfiguration());
 
         TalonFXConfiguration configsRotate = new TalonFXConfiguration();
         configsRotate.Slot0.kP = Constants.ClawConstants.claw_P;
         configsRotate.Slot0.kI = Constants.ClawConstants.claw_I;
         configsRotate.Slot0.kD = Constants.ClawConstants.claw_D;
+
+        configsRotate.withMotorOutput(new MotorOutputConfigs().withInverted(CounterClockwise_Positive));
 
         configsRotate.CurrentLimits.withStatorCurrentLimit(35);
         configsRotate.CurrentLimits.withStatorCurrentLimitEnable(true);
@@ -41,17 +52,19 @@ public class Claw extends SubsystemBase
 
         clawRotate.getConfigurator().apply(configsRotate);
         clawSpin.getConfigurator().apply(configsSpin);
+        clawFunnel.getConfigurator().apply(configsSpin);
     }
 
     public void spinRollers(double OutputPercent)
     {
         OutputPercent /= 100.;
         clawSpin.set(-OutputPercent);
+        clawFunnel.set(OutputPercent);
     }
 
     public boolean pieceDetected()
     {
-        return getTOFDistance() < .05;
+        return getTOFDistance() < .4;
     }
 
     public double getTOFDistance()
@@ -74,6 +87,16 @@ public class Claw extends SubsystemBase
         return clawRotate.getPosition().getValueAsDouble();
     }
 
+    public boolean checkSetpoint(int level)
+    {
+        if (getPosition() < setPoints[level] + errorRange && getPosition() > setPoints[level] - errorRange)
+        {
+            return true;
+        }
+        
+        return false;
+    }
+
     public void autoIntake()
     {
         if (pieceDetected())
@@ -84,5 +107,15 @@ public class Claw extends SubsystemBase
         {
             spinRollers(50);
         }
+    }
+
+    public boolean checkRotation(Double point)
+    {
+        if (getPosition() < point + errorRange && getPosition() > point - errorRange)
+        {
+            return true;
+        }
+
+        return false;
     }
 }

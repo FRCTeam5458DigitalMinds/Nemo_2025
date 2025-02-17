@@ -45,6 +45,11 @@ public class Limelight extends SubsystemBase
     }
     
 
+    public int tagID()
+    {
+        updateLimelightTracking();
+        return ((int)tag_ID);
+    }
     public double distToTag() 
     {
         updateLimelightTracking();
@@ -102,16 +107,6 @@ public class Limelight extends SubsystemBase
         }
 
         return m_x_AngleOffset;
-    }
-
-    public boolean onTarget()
-    {
-        if (strafeOffset() <= .5 || rotationOffset() <= .5) // TO DO: test error margin
-        {
-            return true;
-        }
-
-        return false;
     }
 }
 

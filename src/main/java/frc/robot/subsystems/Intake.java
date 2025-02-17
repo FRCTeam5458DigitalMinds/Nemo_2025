@@ -34,8 +34,8 @@ public class Intake extends SubsystemBase {
 
         TalonFXConfiguration RollerConfigs = new TalonFXConfiguration();
         RollerConfigs.Voltage.withPeakForwardVoltage(8);
-        RollerConfigs.TorqueCurrent.withPeakForwardTorqueCurrent(35)
-            .withPeakReverseTorqueCurrent(-35);
+        RollerConfigs.TorqueCurrent.withPeakForwardTorqueCurrent(20)
+            .withPeakReverseTorqueCurrent(-20);
 
         intakeMotor.getConfigurator().apply(intakeConfigs);
         RollerMotor.getConfigurator().apply(RollerConfigs);
@@ -45,16 +45,10 @@ public class Intake extends SubsystemBase {
     {
       OutputPercent /= 100.;
       RollerMotor.set(-OutputPercent);
-      /*
-      Probably MotionMagic Stuff I'm too tried
-      RollerMotor.setControl(motionmagic)
-      */
     }
 
     public void toSetpoint(int setpointIndex)
     {
-
         intakeMotor.setControl(m_request.withPosition(setPoints[setpointIndex]).withSlot(0));
-
     }
 }
