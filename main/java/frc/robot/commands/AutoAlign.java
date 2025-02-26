@@ -7,25 +7,50 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
-import frc.robot.subsystems.Limelight;
-
 
 public class AutoAlign extends Command {
     CommandSwerveDrivetrain DRIVETRAIN;
-    Limelight LIMELIGHT;
 
-    public AutoAlign(CommandSwerveDrivetrain drivetrain, Limelight limelight) 
+    Pose2d TAG;
+    Transform2d LEFTPOSE;
+    Transform2d RIGHTPOSE;
+    Pose2d TARGETPOSE;
+
+    boolean ISLEFT;
+
+    public AutoAlign(CommandSwerveDrivetrain drivetrain, boolean left) 
     {
         this.DRIVETRAIN = drivetrain;
-        this.LIMELIGHT = limelight;
+        this.ISLEFT = left;
 
         addRequirements(drivetrain);
-        addRequirements(limelight);
     }
-    
-    Pose2d tag = AprilTagFieldLayout.loadField(AprilTagFields.k2025ReefscapeAndyMark).getTagPose(7).get().toPose2d();
-    //Create a transform of 0.5m left, 0.5m back, and no rotation (front away from tag)
-    Transform2d leftside =new Transform2d(new Pose2d(), new Pose2d(0.5,-0.5,new Rotation2d()));
-    //This pose is now the desired position and orientation to drive to
-    Pose2d targetPose =tag.transformBy(leftside);
+
+    public void initialize()
+    {
+        //find out what this does for our silly half field
+        //dynamic IDs
+        TAG = AprilTagFieldLayout.loadField(AprilTagFields.k2025ReefscapeAndyMark).getTagPose(7).get().toPose2d();
+
+        LEFTPOSE = new Transform2d(new Pose2d(), new Pose2d(1,-1, new Rotation2d()));
+        RIGHTPOSE = new Transform2d(new Pose2d(), new Pose2d(-1,-1, new Rotation2d()));
+
+        TARGETPOSE = TAG.transformBy(RIGHTPOSE);
+
+        if (ISLEFT)
+        {
+            TARGETPOSE = TAG.transformBy(LEFTPOSE);
+        }
+        
+    }
+
+    public void execute()
+    {
+        isFinished();
+    }
+
+    public boolean isFinished()
+    {
+        return true;
+    }
 }

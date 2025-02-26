@@ -29,7 +29,7 @@ public final class Constants {
         public static final int clawID3 = 17; //probably
 
         //not final; change before running
-        public static final double claw_P = 0;
+        public static final double claw_P = 1;
         public static final double claw_I = 0;
         public static final double claw_D = 0;
     }

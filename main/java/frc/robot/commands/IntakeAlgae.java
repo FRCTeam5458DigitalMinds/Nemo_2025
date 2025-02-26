@@ -22,6 +22,7 @@ public class IntakeAlgae extends Command {
         INTAKE.setRollers(50);
         INTAKE.toSetpoint(1);
     }
+    
     public void execute()
     {
         isFinished();

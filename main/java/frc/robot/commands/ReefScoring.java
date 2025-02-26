@@ -1,5 +1,6 @@
 package frc.robot.commands;
 
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.subsystems.Claw;
 import frc.robot.subsystems.Elevator;
@@ -23,22 +24,37 @@ public class ReefScoring extends Command
 
     public void initialize()
     {
-        CLAW.toPosition(1);        
+        if (LEVEL != 1){
+            CLAW.toPosition(6);  
+        }
+        else {
+            CLAW.toPosition(1);
+        }
     }
 
-    
     public void execute()
     {
-        //if (CLAW.getPosition() > 20)
-        if (CLAW.checkSetpoint(1))
-        {
-            ELEVATOR.changeStage(LEVEL);
-        }
+        SmartDashboard.putNumber("Claw Pos", CLAW.getPosition());
+        isFinished();
     }
 
     public boolean isFinished()
     {
+        if (CLAW.getPosition() > 10 && LEVEL != 1)
+        {
+            ELEVATOR.changeStage(LEVEL);
+
+            if (Math.abs(ELEVATOR.getV()) < .03)
+            {
+                return true;
+            }
+        }
+
+        if (LEVEL == 1 && CLAW.getPosition() > 7)
+        {
+            return true;
+        }
         
-        return true;
+        return false;
     }
 }
