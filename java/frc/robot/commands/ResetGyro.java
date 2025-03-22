@@ -1,7 +1,7 @@
 package frc.robot.commands;
 
 import frc.robot.subsystems.CommandSwerveDrivetrain;
-
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 
 public class ResetGyro extends Command {
@@ -15,7 +15,9 @@ public class ResetGyro extends Command {
 
     public void initialize()
     {
-        DRIVETRAIN.resetGyro();
+        DRIVETRAIN.resetPOSE();
+
+        SmartDashboard.putString("reset", "reset");
     }
     
     public void execute()

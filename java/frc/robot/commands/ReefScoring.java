@@ -45,7 +45,7 @@ public class ReefScoring extends Command
         if (CLAW.getPosition() > 10 && LEVEL != 1)
         {
             if (LEVEL > 10) {
-                ELEVATOR.changeStage(LEVEL - 10);
+                ELEVATOR.changeStage(LEVEL);
             } else {
                 ELEVATOR.changeStage(LEVEL);
             }
@@ -54,7 +54,7 @@ public class ReefScoring extends Command
             {
                 if (LEVEL == 4)
                 {
-                    return ELEVATOR.getPosition() > 39;
+                    return ELEVATOR.getPosition() > 37;
                 }
                 SmartDashboard.putNumber("getV", ELEVATOR.getV());
                 return true;

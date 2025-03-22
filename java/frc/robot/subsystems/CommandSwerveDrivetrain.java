@@ -4,6 +4,7 @@ import static edu.wpi.first.units.Units.*;
 import java.util.function.Supplier;
 import com.ctre.phoenix6.SignalLogger;
 import com.ctre.phoenix6.Utils;
+import com.ctre.phoenix6.configs.Pigeon2Configuration;
 import com.ctre.phoenix6.hardware.Pigeon2;
 import com.ctre.phoenix6.swerve.SwerveDrivetrainConstants;
 import com.ctre.phoenix6.swerve.SwerveModuleConstants;
@@ -82,14 +83,15 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     /* Swerve requests to apply during SysId characterization */
     private final SwerveRequest.SysIdSwerveTranslation m_translationCharacterization = new SwerveRequest.SysIdSwerveTranslation();
     private final Pigeon2 pigeon = new Pigeon2(TunerConstants.DrivetrainConstants.Pigeon2Id);
+
     private final SwerveDrivePoseEstimator m_poseEstimator =
     new SwerveDrivePoseEstimator(
         getKinematics(),
         pigeon.getRotation2d(),
         getState().ModulePositions,
         new Pose2d(),
-        VecBuilder.fill(0.05, 0.05, Units.degreesToRadians(5)),
-        VecBuilder.fill(0.5, 0.5, Units.degreesToRadians(30)));
+        VecBuilder.fill(1.5, 1.5, Units.degreesToRadians(5)),
+        VecBuilder.fill(1.5, 1.5, Units.degreesToRadians(30)));
 
     public Pose2d getPose()
     {
@@ -128,13 +130,13 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     public Pose2d getLeftTargetPose()
     {
         Pose2d TAG = AprilTagFieldLayout.loadField(AprilTagFields.k2025ReefscapeAndyMark).getTagPose(getLastKnownReefTag()).get().toPose2d();
-        Transform2d LEFTPOSE = new Transform2d(new Pose2d(), new Pose2d(.2, -.18, new Rotation2d().fromDegrees(180)));
+        Transform2d LEFTPOSE = new Transform2d(new Pose2d(), new Pose2d(0.12, -.25, new Rotation2d().fromDegrees(180)));
         Pose2d TARGETPOSELEFT = TAG.transformBy(LEFTPOSE);
-
-        SmartDashboard.putNumber("ly", -((0.1675 * Math.cos(-getTagRotation())) - (0.158 * Math.sin(-getTagRotation()))));
-        SmartDashboard.putNumber("lx", -((0.1675 * Math.sin(-getTagRotation())) - (0.158 * Math.cos(-getTagRotation()))));
         //Pose2d TARGETPOSERIGHT = TAG.transformBy(RIGHTPOSE);
         //Pose2d ALGAEPOSE = TAG.transformBy(ALGAE);
+
+        SmartDashboard.putNumber("ry", TARGETPOSELEFT.getY());
+        SmartDashboard.putNumber("rx", TARGETPOSELEFT.getX());
 
         return TARGETPOSELEFT;
     }
@@ -145,23 +147,24 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         Transform2d ALGAE = new Transform2d(new Pose2d(), new Pose2d(-0.1, 0, new Rotation2d(-1)));
         Pose2d TARGETPOSELEFT = TAG.transformBy(ALGAE);
 
+        
+
         return TARGETPOSELEFT;
     }
 
     public Pose2d getRightTargetPose()
     {
         Pose2d TAG = AprilTagFieldLayout.loadField(AprilTagFields.k2025ReefscapeWelded).getTagPose(getLastKnownReefTag()).get().toPose2d();
-        SmartDashboard.putNumber("robot rot", getPose().getRotation().getRadians());
+        SmartDashboard.putNumber("robot rot", getRotation().getDegrees());
         //Transform2d RIGHTPOSE = new Transform2d(new Pose2d(), new Pose2d(((-0.27*Math.cos(getTagRotation())) + (0.15*Math.sin(getTagRotation()))), -((-0.27*Math.sin(getTagRotation())) - (0.16*Math.cos(getTagRotation()))), new Rotation2d().fromDegrees(180)));
 
-        Transform2d RIGHTPOSE  = new Transform2d(new Pose2d(), new Pose2d(0.2, 0.17, new Rotation2d().fromDegrees(180)));
+        Transform2d RIGHTPOSE  = new Transform2d(new Pose2d(), new Pose2d(0.12, -0.25, new Rotation2d().fromDegrees(180)));
         Pose2d TARGETPOSELEFT = TAG.transformBy(RIGHTPOSE);
         SmartDashboard.putNumber("tag rot", TARGETPOSELEFT.getRotation().getDegrees());
 
+        
         SmartDashboard.putNumber("ry", TARGETPOSELEFT.getY());
         SmartDashboard.putNumber("rx", TARGETPOSELEFT.getX());
-        SmartDashboard.putNumber("ty", RIGHTPOSE.getY());
-        SmartDashboard.putNumber("tx", RIGHTPOSE.getX());
 
         return TARGETPOSELEFT;
     }
@@ -221,7 +224,8 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         if (Utils.isSimulation()) {
             startSimThread();
         }
-    
+
+        setFiducialIds();
         SmartDashboard.putData("Field", m_field);
         configureAutoBuilder();
     }
@@ -251,14 +255,22 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         }
         SmartDashboard.putData("Field", m_field);
         configureAutoBuilder();
+    }
+
+    public void resetPOSE()
+    {
+        resetPose(new Pose2d(0, 0, new Rotation2d(0)));
+        //this.getPigeon2().reset();
+        this.getPigeon2().setYaw(0);
 
     }
     
     private void configureAutoBuilder() {
         try {
+            
             var config = RobotConfig.fromGUISettings();
             AutoBuilder.configure(
-                () -> getState().Pose,   // Supplier of current robot pose
+                () -> getPose(),   // Supplier of current robot pose
                 this::resetPose,         // Consumer for seeding pose against auto
                 () -> getState().Speeds, // Supplier of current robot speeds
                 // Consumer of ChassisSpeeds and feedforwards to drive the robot
@@ -364,7 +376,6 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         return run(() -> this.setControl(requestSupplier.get()));
     }
 
-    
     /**
      * Runs the SysId Quasistatic test in the given direction for the routine
      * specified by {@link #m_sysIdRoutineToApply}.
@@ -387,18 +398,19 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         return m_sysIdRoutineToApply.dynamic(direction);
     }
 
+    private void setFiducialIds() {
+        int[] validIds = {6, 7, 8, 9, 10, 11, 17, 18, 19, 20, 21, 22};
+        LimelightHelpers.SetFiducialIDFiltersOverride("limelight", validIds);
+    }
+
     public double getYaw()
     {
         return this.getPigeon2().getYaw().getValueAsDouble();
     }
+
     @Override
     public void periodic() {
-        SmartDashboard.putNumber("robot rot", getPose().getRotation().getDegrees());
-
         updateOdometry();
-        getPose();
-        m_field.setRobotPose(m_poseEstimator.getEstimatedPosition());
-        SmartDashboard.putNumber("field pose", m_field.getRobotPose().getX());
 
         if (!m_hasAppliedOperatorPerspective || DriverStation.isDisabled()) {
             DriverStation.getAlliance().ifPresent(allianceColor -> {
@@ -427,45 +439,31 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         m_simNotifier.startPeriodic(kSimLoopPeriod);
     }
 
+    public Rotation2d getRotation()
+    {
+        return getState().Pose.getRotation();
+    }
+
     public void updateOdometry() {
+        m_field.setRobotPose(getPose());
+        SmartDashboard.putNumber("field pose", m_field.getRobotPose().getX());
+
         m_poseEstimator.update(
-            pigeon.getRotation2d(),
+            getRotation(),
             getState().ModulePositions);
-    
-        boolean useMegaTag2 = true; //set to false to use MegaTag1
+
+        SmartDashboard.putNumber("poseX", m_poseEstimator.getEstimatedPosition().getX());
+        SmartDashboard.putNumber("state X", getState().Pose.getX());
+        SmartDashboard.putNumber("state rot", getState().Pose.getRotation().getRotations());
+
+
+        SmartDashboard.putNumber("poseY", m_poseEstimator.getEstimatedPosition().getY());
+        SmartDashboard.putNumber("robot rot func", getRotation().getRotations());
+        SmartDashboard.putNumber("pose estiator rot", m_poseEstimator.getEstimatedPosition().getRotation().getRotations());
+
         boolean doRejectUpdate = false;
-        if(useMegaTag2 == false)
-        {
-          LimelightHelpers.PoseEstimate mt1 = LimelightHelpers.getBotPoseEstimate_wpiBlue("limelight");
-          
-          if(mt1.tagCount == 1 && mt1.rawFiducials.length == 1)
-          {
-            if(mt1.rawFiducials[0].ambiguity > .7)
-            {
-              doRejectUpdate = true;
-            }
-            if(mt1.rawFiducials[0].distToCamera > 3)
-            {
-              doRejectUpdate = true;
-            }
-          }
-          if(mt1.tagCount == 0)
-          {
-            doRejectUpdate = true;
-          }
-    
-          if(!doRejectUpdate)
-          {
-            m_poseEstimator.setVisionMeasurementStdDevs(VecBuilder.fill(.5,.5,9999999));
-            m_poseEstimator.addVisionMeasurement(
-                mt1.pose,
-                mt1.timestampSeconds);
-          }
-        }
-        else if (useMegaTag2 == true)
-        {
-          LimelightHelpers.SetRobotOrientation("limelight", m_poseEstimator.getEstimatedPosition().getRotation().getDegrees(), 0, 0, 0, 0, 0);
-          LimelightHelpers.PoseEstimate mt2 = LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2("limelight");
+        
+        LimelightHelpers.PoseEstimate mt2 = LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2("limelight");
           if(Math.abs(pigeon.getAccelerationX().getValueAsDouble()) > 720) // if our angular velocity is greater than 720 degrees per second, ignore vision updates
           {
             doRejectUpdate = true;
@@ -479,17 +477,21 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
           if(!doRejectUpdate)
           {
             SmartDashboard.putString("state", "not reject");
-            SmartDashboard.putNumber("poseX", m_poseEstimator.getEstimatedPosition().getX());
+            
+            SmartDashboard.putNumber("mt2 X", mt2.pose.getX());
+            SmartDashboard.putNumber("mt2 Y", mt2.pose.getY());
 
-            LimelightHelpers.SetRobotOrientation("limelight", this.getPigeon2().getYaw().getValueAsDouble(), 0, 0, 0, 0, 0);
-            m_poseEstimator.setVisionMeasurementStdDevs(VecBuilder.fill(1,1,9999999));
+            SmartDashboard.putNumber("poseY", m_poseEstimator.getEstimatedPosition().getY());
+            LimelightHelpers.SetRobotOrientation("limelight", m_poseEstimator.getEstimatedPosition().getRotation().getDegrees(), 0, 0, 0, 0, 0);
+            m_poseEstimator.setVisionMeasurementStdDevs(VecBuilder.fill(5,5,10));
             m_poseEstimator.addVisionMeasurement(
                 mt2.pose,
                 mt2.timestampSeconds);
+
+
           } else {
             SmartDashboard.putString("state", "reject");
           }
-        }
         }
       }
 }

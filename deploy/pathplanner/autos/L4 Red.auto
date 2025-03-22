@@ -7,7 +7,7 @@
         {
           "type": "path",
           "data": {
-            "pathName": "To Middle"
+            "pathName": "To Left"
           }
         },
         {
@@ -26,6 +26,24 @@
           "type": "named",
           "data": {
             "name": "Stow"
+          }
+        },
+        {
+          "type": "wait",
+          "data": {
+            "waitTime": 0.1
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "Intake"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "To Left Sub"
           }
         }
       ]

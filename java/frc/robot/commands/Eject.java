@@ -23,22 +23,24 @@ public class Eject extends Command
         {
             SmartDashboard.putNumber("Claw Pos", CLAW.getPosition());
             //CLAW.toPosition(LEVEL);
-
         }
         else
         {
-            CLAW.spinRollers(60);
+            CLAW.spinRollers(50);
         }
     }
 
     public void execute()
     {
+        SmartDashboard.putNumber("claw spin", CLAW.getSpin());
+        SmartDashboard.putNumber("claw V", CLAW.getV());
+
         isFinished();            
     }
 
     public boolean isFinished()
     {
-        if (Math.abs(CLAW.getV()) < 0.02 && LEVEL != 1)
+        if (Math.abs(CLAW.getV()) < 0.05 && LEVEL != 1)
         {
             SmartDashboard.putNumber("claw V", CLAW.getV());
             CLAW.spinRollers(-100);

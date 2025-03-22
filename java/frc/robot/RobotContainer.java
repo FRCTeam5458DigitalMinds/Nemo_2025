@@ -5,7 +5,9 @@ import static edu.wpi.first.units.Units.*;
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.auto.NamedCommands;
+import com.ctre.phoenix6.mechanisms.swerve.LegacySwerveRequest.ApplyChassisSpeeds;
 import com.ctre.phoenix6.swerve.SwerveRequest;
+
 
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.wpilibj.DriverStation;
@@ -27,6 +29,7 @@ import frc.robot.commands.StowAlgae;
 import frc.robot.commands.testAutoClaw;
 import frc.robot.commands.NetScoreIntake;
 import frc.robot.commands.ProcessorScore;
+import frc.robot.commands.AlignToReefTagRelative;
 import frc.robot.commands.AutoAlign;
 import frc.robot.commands.Eject;
 import frc.robot.generated.TunerConstants;
@@ -39,6 +42,7 @@ public class RobotContainer {
     private double MaxSpeed = TunerConstants.kSpeedAt12Volts.in(MetersPerSecond); // kSpeedAt12Volts desired top speed
     private double MaxAngularRate = RotationsPerSecond.of(0.75).in(RadiansPerSecond); // 3/4 of a rotation per second max angular velocity
 
+    private final SwerveRequest.RobotCentric robotDrive = new SwerveRequest.RobotCentric().withDriveRequestType(DriveRequestType.OpenLoopVoltage);
     /* Setting up bindings for necessary control of the swerve drive platform */
     private final SwerveRequest.FieldCentric drive = new SwerveRequest.FieldCentric()
             .withDeadband(MaxSpeed * 0.1).withRotationalDeadband(MaxAngularRate * 0.1) // Add a 10% deadband
@@ -49,7 +53,7 @@ public class RobotContainer {
 
     private final Telemetry logger = new Telemetry(MaxSpeed);
 
-    private final CommandXboxController driverController = new CommandXboxController(1);
+    //private final CommandXboxController driverController = new CommandXboxController(1);
     private final CommandXboxController operatorController = new CommandXboxController(0);
 
     private final int blueConst = 1;
@@ -86,7 +90,7 @@ public class RobotContainer {
         NamedCommands.registerCommand("L4", new ReefScoring(CLAW, ELEVATOR, 4).andThen(new Eject(CLAW, 4)));
         NamedCommands.registerCommand("Stow", new StowElevatorClaw(ELEVATOR, CLAW));
         NamedCommands.registerCommand("L1", new ReefScoring(CLAW, ELEVATOR, 1).andThen(new Eject(CLAW, 1)).andThen(new StowElevatorClaw(ELEVATOR, CLAW)));
-        NamedCommands.registerCommand("Transfer Coral", new testAutoClaw(CLAW));
+        NamedCommands.registerCommand("Intake", new testAutoClaw(CLAW));
 
         autoChooser2 = AutoBuilder.buildAutoChooser();
         
@@ -95,7 +99,6 @@ public class RobotContainer {
     }
 
     private void configureBindings() {
-
         //DRIVE COMMANDS
         drivetrain.setDefaultCommand(
             // Drivetrain will execute this command periodically
@@ -106,63 +109,62 @@ public class RobotContainer {
             )
         );
 
-        operatorController.leftBumper().and(() -> CLAW.pieceDetected()).whileTrue(
-            drivetrain.applyRequest(() -> 
-                drive.withVelocityX(translatePID.calculate(drivetrain.getPose().getX(), drivetrain.getLeftTargetPose().getX()))
-                .withVelocityY(strafePID.calculate(drivetrain.getPose().getY(), drivetrain.getLeftTargetPose().getY()))
-                .withRotationalRate(rotatePID.calculate(drivetrain.getPose().getRotation().getDegrees(), drivetrain.getLeftTargetPose().getRotation().getDegrees() - 1))
-            )
+
+        operatorController.leftBumper().and(() -> CLAW.pieceDetected()).and(() -> !operatorController.start().getAsBoolean()).whileTrue(
+            new AlignToReefTagRelative(false, drivetrain, true)
         );
 
-        operatorController.leftBumper().and(() -> !CLAW.pieceDetected()).whileTrue(
-            drivetrain.applyRequest(() -> 
-                drive.withVelocityX(translatePID.calculate(drivetrain.getPose().getX(), drivetrain.getCenterTargetPose().getX()))
-                .withVelocityY(strafePID.calculate(drivetrain.getPose().getY(), drivetrain.getCenterTargetPose().getY()))
-                //.withRotationalRate(rotatePID.calculate(drivetrain.getYaw(), 1))
-            )
+        operatorController.leftBumper().and(() -> CLAW.pieceDetected()).and(operatorController.start()).whileTrue(
+            new AlignToReefTagRelative(false, drivetrain, false)
         );
+
+        //operatorController.leftBumper().and(() -> !CLAW.pieceDetected()).whileTrue(
+        //    drivetrain.applyRequest(() -> 
+        //        robotDrive.withVelocityX(-translatePID.calculate(drivetrain.getPose().getX(), drivetrain.getCenterTargetPose().getX()))
+        //        .withVelocityY(-strafePID.calculate(drivetrain.getPose().getY(), drivetrain.getCenterTargetPose().getY()))
+        //        //.withRotationalRate(rotatePID.calculate(drivetrain.getYaw(), 1))
+        //    )
+        //);
 
         operatorController.rightBumper().and(() -> !operatorController.start().getAsBoolean()).whileTrue(
-            drivetrain.applyRequest(() -> 
-                drive.withVelocityX(translatePID.calculate(drivetrain.getPose().getX(), drivetrain.getRightTargetPose().getX()))
-                .withVelocityY(strafePID.calculate(drivetrain.getPose().getY(), drivetrain.getRightTargetPose().getY()))
-                .withRotationalRate(rotatePID.calculate(drivetrain.getPose().getRotation().getDegrees(), drivetrain.getRightTargetPose().getRotation().getDegrees()))
-            )
+            new AlignToReefTagRelative(true, drivetrain, true)
         );
-
 
         operatorController.rightBumper().and(operatorController.start()).whileTrue(
-            drivetrain.applyRequest(() -> 
-                drive.withRotationalRate(rotatePID.calculate(drivetrain.getPose().getRotation().getDegrees(), drivetrain.getRightTargetPose().getRotation().getDegrees()))
-            )
+            new AlignToReefTagRelative(true, drivetrain, false)
         );
 
-        driverController.back().and(driverController.y()).whileTrue(drivetrain.sysIdDynamic(Direction.kForward));
-        driverController.back().and(driverController.x()).whileTrue(drivetrain.sysIdDynamic(Direction.kReverse));
-        driverController.start().and(driverController.y()).whileTrue(drivetrain.sysIdQuasistatic(Direction.kForward));
-        driverController.start().and(driverController.x()).whileTrue(drivetrain.sysIdQuasistatic(Direction.kReverse));
-        driverController.start().onTrue(drivetrain.runOnce(() -> drivetrain.seedFieldCentric()));
+        //operatorController.rightBumper().and(operatorController.start()).whileTrue(
+        //    drivetrain.applyRequest(() -> 
+        //        robotDrive.withVelocityX(-translatePID.calculate(drivetrain.getPose().getX(), drivetrain.getRightTargetPose().getX()))
+        //        .withVelocityY(-strafePID.calculate(drivetrain.getPose().getY(), drivetrain.getRightTargetPose().getY())))
+        //);
+
+       // driverController.back().and(driverController.y()).whileTrue(drivetrain.sysIdDynamic(Direction.kForward));
+       // driverController.back().and(driverController.x()).whileTrue(drivetrain.sysIdDynamic(Direction.kReverse));
+       // driverController.start().and(driverController.y()).whileTrue(drivetrain.sysIdQuasistatic(Direction.kForward));
+       // driverController.start().and(driverController.x()).whileTrue(drivetrain.sysIdQuasistatic(Direction.kReverse));
+       // driverController.start().onTrue(drivetrain.runOnce(() -> drivetrain.seedFieldCentric()));
         drivetrain.registerTelemetry(logger::telemeterize);
 
         CLAW.setDefaultCommand(new testAutoClaw(CLAW));
 
-        driverController.povLeft().onTrue(new StowElevatorClaw(ELEVATOR, CLAW));
+        //driverController.povLeft().onTrue(new StowElevatorClaw(ELEVATOR, CLAW));
 
         operatorController.rightTrigger().whileTrue(new IntakeAlgae(CLAW, INTAKE)).onFalse(new StowAlgae(CLAW, INTAKE));
         operatorController.povUp().onTrue(new netHigh(CLAW, ELEVATOR).andThen(new NetScoreIntake(CLAW, INTAKE, ELEVATOR)));
         operatorController.povRight().onTrue(new ProcessorScore(INTAKE));
 
         operatorController.a().onTrue(new ReefScoring(CLAW, ELEVATOR, 1).andThen(new Eject(CLAW, 1)).andThen(new StowElevatorClaw(ELEVATOR, CLAW)));
-        operatorController.x().and(() -> CLAW.pieceDetected()).and(() -> !operatorController.rightBumper().getAsBoolean()).and(() -> !operatorController.leftBumper().getAsBoolean()).onTrue(new ReefScoring(CLAW, ELEVATOR, 2).andThen(new Eject(CLAW, 2)).andThen(new StowElevatorClaw(ELEVATOR, CLAW)));
+        operatorController.x().and(() -> CLAW.pieceDetected()).and(() -> !operatorController.rightBumper().getAsBoolean()).and(() -> !operatorController.leftBumper().getAsBoolean()).onTrue(new ReefScoring(CLAW, ELEVATOR, 2));
         operatorController.x().and(() -> !CLAW.pieceDetected()).and(() -> !operatorController.rightBumper().getAsBoolean()).and(() -> !operatorController.leftBumper().getAsBoolean()).onTrue(new ReefScoring(CLAW, ELEVATOR, 12).andThen(new RemoveAlgae(CLAW, 2)));
+        operatorController.axisGreaterThan(2, 0.1).onTrue(new ResetGyro(drivetrain));
+        operatorController.axisGreaterThan(3, 0.05).onTrue(new Eject(CLAW, 2));
 
-
-        operatorController.y().and(() -> CLAW.pieceDetected()).onTrue(new ReefScoring(CLAW, ELEVATOR, 3).andThen(new Eject(CLAW, 3)));
+        operatorController.y().and(() -> CLAW.pieceDetected()).onTrue(new ReefScoring(CLAW, ELEVATOR, 3));
         operatorController.y().and(() -> !CLAW.pieceDetected()).onTrue(new ReefScoring(CLAW, ELEVATOR, 13).andThen(new RemoveAlgae(CLAW, 3)));
 
-        operatorController.b().onTrue(new ReefScoring(CLAW, ELEVATOR, 4).andThen(new Eject(CLAW, 4)));
-
-
+        operatorController.b().onTrue(new ReefScoring(CLAW, ELEVATOR, 4));
         operatorController.povLeft().onTrue(new StowElevatorClaw(ELEVATOR, CLAW));
 
         //operatorController.start().onTrue(new ResetGyro(drivetrain));

@@ -79,6 +79,10 @@ public class Claw extends SubsystemBase
         return clawTOF.getDistance().getValueAsDouble();
     }
 
+    public double getSpin()
+    {
+        return clawSpin.get();
+    }
     public double getV()
     {
         return clawRotate.get();
