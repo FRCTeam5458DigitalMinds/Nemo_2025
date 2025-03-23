@@ -1,6 +1,8 @@
 package frc.robot.subsystems;
 
 import static edu.wpi.first.units.Units.*;
+
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 import com.ctre.phoenix6.SignalLogger;
 import com.ctre.phoenix6.Utils;
@@ -230,6 +232,11 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         configureAutoBuilder();
     }
 
+    public void resetPoseEstimator()
+    {
+        m_poseEstimator.resetPose(getState().Pose);
+    }
+
     /**
      * Constructs a CTRE SwerveDrivetrain using the specified constants.
      * <p>
@@ -259,10 +266,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
 
     public void resetPOSE()
     {
-        resetPose(new Pose2d(0, 0, new Rotation2d(0)));
-        //this.getPigeon2().reset();
-        this.getPigeon2().setYaw(0);
-
+        resetPose(new Pose2d());
     }
     
     private void configureAutoBuilder() {

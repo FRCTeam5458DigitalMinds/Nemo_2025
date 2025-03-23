@@ -22,7 +22,9 @@ import frc.robot.commands.ReefScoring;
 import frc.robot.commands.IntakeAlgae;
 import frc.robot.commands.RemoveAlgae;
 import frc.robot.commands.StowElevatorClaw;
+import frc.robot.commands.autoClaw;
 import frc.robot.commands.netHigh;
+import frc.robot.commands.poseState;
 import frc.robot.commands.ResetClaw;
 import frc.robot.commands.ResetGyro;
 import frc.robot.commands.StowAlgae;
@@ -87,10 +89,11 @@ public class RobotContainer {
             sideConst *= redConst;
         }
 
+        NamedCommands.registerCommand("Pose", new poseState(drivetrain));
         NamedCommands.registerCommand("L4", new ReefScoring(CLAW, ELEVATOR, 4).andThen(new Eject(CLAW, 4)));
         NamedCommands.registerCommand("Stow", new StowElevatorClaw(ELEVATOR, CLAW));
         NamedCommands.registerCommand("L1", new ReefScoring(CLAW, ELEVATOR, 1).andThen(new Eject(CLAW, 1)).andThen(new StowElevatorClaw(ELEVATOR, CLAW)));
-        NamedCommands.registerCommand("Intake", new testAutoClaw(CLAW));
+        NamedCommands.registerCommand("Intake", new autoClaw(CLAW));
 
         autoChooser2 = AutoBuilder.buildAutoChooser();
         

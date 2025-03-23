@@ -46,7 +46,7 @@ public class Eject extends Command
             CLAW.spinRollers(-100);
             SmartDashboard.putBoolean("eject done", false);
 
-            if (!CLAW.pieceDetected())
+            if (CLAW.getTOFDistance() > 0.1)
             {
                 SmartDashboard.putBoolean("eject done", true);
                 return true;
