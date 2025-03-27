@@ -22,8 +22,7 @@ public class netHigh extends Command
 
     public void initialize()
     {
-        ELEVATOR.changeStage(4);
-
+        ELEVATOR.changeStage(14);
     }
 
     public void execute()
@@ -34,7 +33,7 @@ public class netHigh extends Command
     public boolean isFinished()
     {
 
-        if (Math.abs(ELEVATOR.getV()) < .01 && ELEVATOR.getPosition() > 38)
+        if (ELEVATOR.getPosition() > 35)
         {
             CLAW.toPosition(6);
             return true;

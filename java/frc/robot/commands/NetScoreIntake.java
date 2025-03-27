@@ -33,14 +33,13 @@ public class NetScoreIntake extends Command {
 
     public boolean isFinished()
     {
-        if (Math.abs(CLAW.getV()) < 0.02)
+
+        CLAW.spinRollers(100);
+        if (!CLAW.pieceDetected())
         {
-            CLAW.spinRollers(100);
-            if (!CLAW.pieceDetected())
-            {
-                return true;
-            }
+            return true;
         }
+        
 
         return false;
     }

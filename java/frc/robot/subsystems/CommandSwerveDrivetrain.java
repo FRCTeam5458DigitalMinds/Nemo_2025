@@ -299,31 +299,21 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         }
     }
 
-    /* public Command generatePath()
+    /*public Command generatePath(Pose2d targetPose)
     {
-  
-        
         //PathConstraints constraints = new PathConstraints(0.5, 0.25, .05 * Math.PI, .1 * Math.PI); // The constraints for this path.
-        PathConstraints constraints = new PathConstraints(5.450, 1.78, 100, 278); // You can also use unlimited constraints, only limited by motor torque and nominal battery voltage
+        PathConstraints constraints = new PathConstraints(3, 2, 100, 278); // You can also use unlimited constraints, only limited by motor torque and nominal battery voltage
 
         // reate the path using the waypoints created above
-        
         PathPlannerPath path = new PathPlannerPath(
-            PathPlannerPath.waypointsFromPoses(getPose(), new Pose2d(6.009, 4.185, new Rotation2d(180))),
+            PathPlannerPath.waypointsFromPoses(getPose(), targetPose),
             constraints,
             null, // The ideal starting state, this is only relevant for pre-planned paths, so can be null for on-the-fly paths.
             new GoalEndState(0.0, Rotation2d.fromDegrees(0)) // Goal end state. You can set a holonomic rotation here. If using a differential drivetrain, the rotation will have no effect.
         ); 
+        path.preventFlipping = true;
         
-        return new FollowPathCommand
-        (path, 
-            getPose(), 
-            null, 
-            null, 
-            null, 
-            null, 
-            null, 
-            null);
+        return AutoBuilder.followPath(path);
     } */
     /* 
     public Command autoAlignCommand(Pose2d waypoint)

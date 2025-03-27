@@ -20,7 +20,7 @@ public class RemoveAlgae extends Command
 
     public void initialize()
     {
-        CLAW.spinRollers(-70);
+        CLAW.spinRollers(-90);
     }
 
     public void execute()

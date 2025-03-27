@@ -125,18 +125,6 @@
                 "data": {
                   "name": "L4"
                 }
-              },
-              {
-                "type": "wait",
-                "data": {
-                  "waitTime": 0.1
-                }
-              },
-              {
-                "type": "named",
-                "data": {
-                  "name": "Stow"
-                }
               }
             ]
           }
