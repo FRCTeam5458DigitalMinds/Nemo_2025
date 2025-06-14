@@ -3,24 +3,29 @@ package frc.robot.commands;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.subsystems.Claw;
+import frc.robot.subsystems.Intake;
 import frc.robot.subsystems.Elevator;
 
 public class RemoveAlgae extends Command 
 {
     private final Claw CLAW;
+    private final Intake INTAKE;
     private final int LEVEL;
 
-    public RemoveAlgae(Claw claw, int level)
+    public RemoveAlgae(Claw claw, Intake intake,int level)
     {
         this.CLAW = claw;
+        this.INTAKE = intake;
         this.LEVEL = level;
 
         addRequirements(claw);
+        addRequirements(intake);
     }
 
     public void initialize()
     {
-        CLAW.spinRollers(-90);
+        CLAW.spinRollers(-95);
+        INTAKE.setRollers(0); //30 or 0 for processor
     }
 
     public void execute()
@@ -33,7 +38,8 @@ public class RemoveAlgae extends Command
         SmartDashboard.putNumber("TOF", CLAW.getTOFDistance());
         if(CLAW.algaeDetected())
         {
-            CLAW.spinRollers(-70);
+            CLAW.spinRollers(-95);
+            INTAKE.setRollers(0);
             return true;
         }
         return false;

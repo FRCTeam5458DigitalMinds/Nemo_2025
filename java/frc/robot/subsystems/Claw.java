@@ -13,7 +13,7 @@ import frc.robot.Constants;
 public class Claw extends SubsystemBase
 {
     // Order of setpoint encoder values: L1(placeholder), L2, L3, L4, Net scoring
-    private double[] setPoints = {0, 13, 25.28395062, 25.28395062, 21.33333333, 20.54320988, 30, 34, 15}; // 0 is placeholder for L1 (NOT YET DESIGNED)
+    private double[] setPoints = {0, 10, 25.28395062, 25.28395062, 21.33333333, 20.54320988, 30, 34, 15, 1.4}; // 0 is placeholder for L1 (NOT YET DESIGNED)
     private double errorRange = 0.25;
 
     private TalonFX clawRotate;
@@ -65,19 +65,24 @@ public class Claw extends SubsystemBase
     public boolean algaeDetected()
     {        
         SmartDashboard.putBoolean("Algae Detect", getTOFDistance() < .2);
-        return getTOFDistance() < .08;
+        return getTOFDistance() < .06;
     }
 
+    public boolean TOFdetect()
+    {
+        return clawTOF.getIsDetected().getValue();
+    }
     public boolean pieceDetected()
     {
         SmartDashboard.putBoolean("Piece Detect", getTOFDistance() < .4);
-        return getTOFDistance() < .2;
+        return getTOFDistance() < .1;
     }
 
     public double getTOFDistance()
     {
         return clawTOF.getDistance().getValueAsDouble();
     }
+
 
     public double getSpin()
     {

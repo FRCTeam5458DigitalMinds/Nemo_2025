@@ -12,11 +12,11 @@ import edu.wpi.first.wpilibj2.command.Command;
  - intakes algae from floor (will be in area between intake and front panel, 1st position) 
   - and then claw comes down to 0 position and sucks in algae
 */
-public class IntakeAlgae extends Command {
+public class RetractAlgae extends Command {
     Claw CLAW;
     Intake INTAKE;
 
-    public IntakeAlgae(Claw claw, Intake intake){
+    public RetractAlgae(Claw claw, Intake intake){
         this.CLAW = claw;
         this.INTAKE = intake;
 
@@ -26,9 +26,8 @@ public class IntakeAlgae extends Command {
 
     public void initialize()
     {
-        CLAW.toPosition(9);
-       INTAKE.toSetpoint(2);
-       INTAKE.setRollers(60); 
+        INTAKE.setRollers(0);
+        INTAKE.toSetpoint(3);
     }
     
     public void execute()
@@ -38,6 +37,15 @@ public class IntakeAlgae extends Command {
 
     @Override
     public boolean isFinished() {
+        /*if(INTAKE.getPosition() < 2){
+            CLAW.customPosition(1.4);
+            
+            return true;
+            //there is a chance that you will need to check for algae and then try to move up to 90 degrees
+        }
+        return false;*/
+
         return true;
+        
     }       
 }

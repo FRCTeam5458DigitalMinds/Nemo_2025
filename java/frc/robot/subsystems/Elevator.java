@@ -17,7 +17,7 @@ public class Elevator extends SubsystemBase {
     //48-3.75 == 44.25
     //48-9.12 = 39
 
-    private double[] stages = {0, 0, 5, 17.5, 40, 0};
+    private double[] stages = {0, 0, 4.25, 17.5, 40, 0,0};
     private double errorRange = 1.25;
     
     private int elevatorID1 = Constants.ClimbConstants.climbID1;
@@ -71,7 +71,13 @@ public class Elevator extends SubsystemBase {
     {
         if (stageIndex > 10)
         {
-            elevatorController.setReference(stages[stageIndex - 10] + 1, ControlType.kPosition);
+            if (stageIndex == 12)
+            {
+                elevatorController.setReference(stages[stageIndex - 10], ControlType.kPosition);
+            }
+            else {
+                elevatorController.setReference(stages[stageIndex - 10] + 1, ControlType.kPosition);
+            }
         }
         else 
         {

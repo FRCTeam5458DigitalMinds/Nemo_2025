@@ -33,9 +33,9 @@ public class netHigh extends Command
     public boolean isFinished()
     {
 
-        if (ELEVATOR.getPosition() > 35)
+        if (ELEVATOR.getPosition() > 35.5) //35
         {
-            CLAW.toPosition(6);
+            CLAW.toPosition(7); //Original 6
             return true;
         }
         

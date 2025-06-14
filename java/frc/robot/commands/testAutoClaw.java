@@ -24,7 +24,7 @@ public class testAutoClaw extends Command
         }
 
         if (CLAW.pieceDetected() == false && CLAW.getPosition() < 1)
-        {
+        {   
             CLAW.spinRollers(30);
         }
 

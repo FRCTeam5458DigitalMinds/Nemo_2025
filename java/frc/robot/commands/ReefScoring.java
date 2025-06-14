@@ -25,12 +25,17 @@ public class ReefScoring extends Command
     public void initialize()
     {
         if (LEVEL < 10 && LEVEL != 1){
-            CLAW.toPosition(6);  
+            CLAW.toPosition(6);
         }
         else if (LEVEL == 1) {
             CLAW.toPosition(1);
-        } else {
-            CLAW.toPosition(8);
+        } 
+        if (LEVEL == 0){
+                //CLAW.customPosition(1.4);
+                //CLAW.toPosition(8); //Processor Potential :money_face:
+        }
+        else {
+                CLAW.toPosition(8);
         }
     }
 
@@ -47,7 +52,14 @@ public class ReefScoring extends Command
             if (LEVEL > 10) {
                 ELEVATOR.changeStage(LEVEL);
             } else {
-                ELEVATOR.changeStage(LEVEL);
+                if (LEVEL == 6 && CLAW.getPosition() > 14)
+                {
+                    return true;
+                }
+                else
+                {
+                    ELEVATOR.changeStage(LEVEL);
+                }
             }
 
             if (Math.abs(ELEVATOR.getV()) < .01)
@@ -61,11 +73,14 @@ public class ReefScoring extends Command
             }
         }
 
-        if (LEVEL == 1 && CLAW.getPosition() > 12)
+        if (LEVEL == 1 && CLAW.getPosition() > 9)
         {
             return true;
         }
-        
+        if (LEVEL == 0 && CLAW.getPosition() > 1.2)
+        {
+            return true;
+        }
         return false;
     }
 }

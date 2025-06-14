@@ -26,7 +26,7 @@ public class Eject extends Command
         }
         else
         {
-            CLAW.spinRollers(50);
+            CLAW.spinRollers(30);
         }
     }
 
@@ -42,17 +42,19 @@ public class Eject extends Command
     {
         if (Math.abs(CLAW.getV()) < 0.05 && LEVEL != 1)
         {
-            SmartDashboard.putNumber("claw V", CLAW.getV());
-            CLAW.spinRollers(-100);
             SmartDashboard.putBoolean("eject done", false);
+            SmartDashboard.putNumber("tof", CLAW.getTOFDistance());
+            SmartDashboard.putNumber("claw V", CLAW.getV());
 
-            if (CLAW.getTOFDistance() > 0.1)
+            CLAW.spinRollers(-100);
+            if (!(CLAW.getTOFDistance() < 0.08) || CLAW.TOFdetect() == false)
             {
+                SmartDashboard.putNumber("tof", CLAW.getTOFDistance());
                 SmartDashboard.putBoolean("eject done", true);
                 return true;
             }
         }
-        if (LEVEL == 1 && !CLAW.pieceDetected())
+        if (LEVEL == 1 && !CLAW.TOFdetect())
         {
             return true;
         }

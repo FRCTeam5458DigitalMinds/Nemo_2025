@@ -27,13 +27,16 @@ import frc.robot.commands.netHigh;
 import frc.robot.commands.poseState;
 import frc.robot.commands.ResetClaw;
 import frc.robot.commands.ResetGyro;
+import frc.robot.commands.RetractAlgae;
 import frc.robot.commands.StowAlgae;
+import frc.robot.commands.StowAlgaeIntake;
 import frc.robot.commands.testAutoClaw;
 import frc.robot.commands.NetScoreIntake;
 import frc.robot.commands.ProcessorScore;
 import frc.robot.commands.AlignToReefTagRelative;
-import frc.robot.commands.AutoAlign;
+import frc.robot.commands.AlignToReefTagRelativeAlgae;
 import frc.robot.commands.Eject;
+import frc.robot.commands.EjectAlgae;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.Claw;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
@@ -57,6 +60,7 @@ public class RobotContainer {
 
     //private final CommandXboxController driverController = new CommandXboxController(1);
     private final CommandXboxController operatorController = new CommandXboxController(0);
+    private final CommandXboxController driverController = new CommandXboxController(1);
 
     private final int blueConst = 1;
     private final int redConst = -1;
@@ -106,21 +110,28 @@ public class RobotContainer {
         drivetrain.setDefaultCommand(
             // Drivetrain will execute this command periodically
             drivetrain.applyRequest(() ->
-                drive.withVelocityX(-operatorController.getLeftY() * MaxSpeed) // Drive forward with negative Y (forward)
-                    .withVelocityY(-operatorController.getLeftX() * MaxSpeed) // Drive left with negative X (left)
-                    .withRotationalRate(-operatorController.getRightX() * MaxAngularRate) // Drive counterclockwise with negative X (left)
+                drive.withVelocityX(-driverController.getLeftY() * MaxSpeed) // Drive forward with negative Y (forward)
+                    .withVelocityY(-driverController.getLeftX() * MaxSpeed) // Drive left with negative X (left)
+                    .withRotationalRate(-driverController.getRightX() * MaxAngularRate) // Drive counterclockwise with negative X (left)
             )
         );
 
 
-        operatorController.leftBumper().and(() -> CLAW.pieceDetected()).and(() -> !operatorController.start().getAsBoolean()).whileTrue(
+        driverController.leftBumper().and(() -> CLAW.pieceDetected()).and(() -> !operatorController.start().getAsBoolean()).whileTrue(
             new AlignToReefTagRelative(false, drivetrain, true)
         );
 
+        driverController.leftBumper().and(() -> !CLAW.pieceDetected()).and(() -> !operatorController.start().getAsBoolean()).whileTrue(
+            new AlignToReefTagRelativeAlgae(drivetrain)
+        );
+        driverController.rightBumper().and(() -> !CLAW.pieceDetected()).and(() -> !operatorController.start().getAsBoolean()).whileTrue(
+            new AlignToReefTagRelativeAlgae(drivetrain)
+        );
+        /* Work in progress
         operatorController.leftBumper().and(() -> CLAW.pieceDetected()).and(operatorController.start()).whileTrue(
             new AlignToReefTagRelative(false, drivetrain, false)
         );
-
+        */
         //operatorController.leftBumper().and(() -> !CLAW.pieceDetected()).whileTrue(
         //    drivetrain.applyRequest(() -> 
         //        robotDrive.withVelocityX(-translatePID.calculate(drivetrain.getPose().getX(), drivetrain.getCenterTargetPose().getX()))
@@ -129,13 +140,14 @@ public class RobotContainer {
         //    )
         //);
 
-        operatorController.rightBumper().and(() -> !operatorController.start().getAsBoolean()).whileTrue(
+        driverController.rightBumper().and(() -> !driverController.start().getAsBoolean()).whileTrue(
             new AlignToReefTagRelative(true, drivetrain, true)
         );
-
+        /* Work in progress
         operatorController.rightBumper().and(operatorController.start()).whileTrue(
             new AlignToReefTagRelative(true, drivetrain, false)
         );
+        */
 
         //operatorController.rightBumper().and(operatorController.start()).whileTrue(
         //    drivetrain.applyRequest(() -> 
@@ -154,21 +166,29 @@ public class RobotContainer {
 
         //driverController.povLeft().onTrue(new StowElevatorClaw(ELEVATOR, CLAW));
 
-        operatorController.rightTrigger().whileTrue(new IntakeAlgae(CLAW, INTAKE)).onFalse(new StowAlgae(CLAW, INTAKE));
-        operatorController.povUp().onTrue(new netHigh(CLAW, ELEVATOR).andThen(new NetScoreIntake(CLAW, INTAKE, ELEVATOR)));
-        operatorController.povRight().onTrue(new ProcessorScore(INTAKE));
+        //operatorController.rightTrigger().whileTrue(new IntakeAlgae(CLAW, INTAKE)).onFalse(new StowAlgae(CLAW, INTAKE));
+        driverController.povUp().onTrue(new netHigh(CLAW, ELEVATOR).andThen(new NetScoreIntake(CLAW, INTAKE, ELEVATOR)));
+        //operatorController.povRight().onTrue(new ProcessorScore(INTAKE));
 
         operatorController.a().onTrue(new ReefScoring(CLAW, ELEVATOR, 1).andThen(new Eject(CLAW, 1)).andThen(new StowElevatorClaw(ELEVATOR, CLAW)));
         operatorController.x().and(() -> CLAW.pieceDetected()).and(() -> !operatorController.rightBumper().getAsBoolean()).and(() -> !operatorController.leftBumper().getAsBoolean()).onTrue(new ReefScoring(CLAW, ELEVATOR, 2));
-        operatorController.x().and(() -> !CLAW.pieceDetected()).and(() -> !operatorController.rightBumper().getAsBoolean()).and(() -> !operatorController.leftBumper().getAsBoolean()).onTrue(new ReefScoring(CLAW, ELEVATOR, 12).andThen(new RemoveAlgae(CLAW, 2)));
-        operatorController.axisGreaterThan(2, 0.1).onTrue(new ResetGyro(drivetrain));
+        operatorController.x().and(() -> !CLAW.pieceDetected()).and(() -> !operatorController.rightBumper().getAsBoolean()).and(() -> !operatorController.leftBumper().getAsBoolean()).onTrue(new ReefScoring(CLAW, ELEVATOR, 12).andThen(new RemoveAlgae(CLAW,INTAKE,2)));
+        //operatorController.axisGreaterThan(2, 0.1).onTrue(new ResetGyro(drivetrain));
         operatorController.axisGreaterThan(3, 0.05).onTrue(new Eject(CLAW, 2));
 
+        driverController.axisGreaterThan(2, 0.05).onTrue(new IntakeAlgae(CLAW, INTAKE));
+        driverController.axisGreaterThan(2, 0.05).onFalse(new RetractAlgae(CLAW, INTAKE));//.andThen(new ReefScoring(CLAW, ELEVATOR, 0)).andThen(new RemoveAlgae(CLAW,INTAKE,0)));
+
+        driverController.axisGreaterThan(3, 0.05).onTrue(new EjectAlgae(CLAW, INTAKE));
+        driverController.axisGreaterThan(3, 0.05).onFalse(new RetractAlgae(CLAW, INTAKE));
+
         operatorController.y().and(() -> CLAW.pieceDetected()).onTrue(new ReefScoring(CLAW, ELEVATOR, 3));
-        operatorController.y().and(() -> !CLAW.pieceDetected()).onTrue(new ReefScoring(CLAW, ELEVATOR, 13).andThen(new RemoveAlgae(CLAW, 3)));
+        operatorController.y().and(() -> !CLAW.pieceDetected()).onTrue(new ReefScoring(CLAW, ELEVATOR, 13).andThen(new RemoveAlgae(CLAW,INTAKE,3)));
 
         operatorController.b().onTrue(new ReefScoring(CLAW, ELEVATOR, 4));
+        
         operatorController.povLeft().onTrue(new StowElevatorClaw(ELEVATOR, CLAW));
+        driverController.povLeft().onTrue(new StowElevatorClaw(ELEVATOR, CLAW).andThen(new StowAlgaeIntake(INTAKE)));
 
         //operatorController.start().onTrue(new ResetGyro(drivetrain));
     }

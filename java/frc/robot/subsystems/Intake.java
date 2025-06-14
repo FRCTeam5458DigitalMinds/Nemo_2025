@@ -8,7 +8,7 @@ import frc.robot.Constants;
 
 public class Intake extends SubsystemBase {
     // Order of setpoint encoder values: Full stow, stow with algae, algae intake
-    private double[] setPoints = {0, 0.866812, 13.86899};
+    private double[] setPoints = {0, -0.866812, -13.,-4.86899};
 
     private TalonFX intakeMotor;
     private TalonFX RollerMotor;
@@ -29,7 +29,10 @@ public class Intake extends SubsystemBase {
         intakeConfigs.Slot0.kI = Constants.IntakeConstants.intake_I;
         intakeConfigs.Slot0.kD = Constants.IntakeConstants.intake_D; 
 
-        intakeConfigs.CurrentLimits.withStatorCurrentLimit(35);
+        intakeConfigs.Slot1.kD = Constants.IntakeConstants.intake_P6000; 
+
+
+        intakeConfigs.CurrentLimits.withStatorCurrentLimit(25);
         intakeConfigs.CurrentLimits.withStatorCurrentLimitEnable(true);
 
         TalonFXConfiguration RollerConfigs = new TalonFXConfiguration();
@@ -52,10 +55,22 @@ public class Intake extends SubsystemBase {
     {
         intakeMotor.setControl(m_request.withPosition(setPoints[setpointIndex]).withSlot(0));
     }
-
+    public void toSetpoint6000(int setpointIndex)
+    {
+        intakeMotor.setControl(m_request.withPosition(setPoints[setpointIndex]).withSlot(1));
+    }
+    public void customPosition(double setPoint)
+    {
+        intakeMotor.setControl(m_request.withPosition(setPoint).withSlot(0));
+    }
     public double getV()
     {
         return intakeMotor.get();
+    }
+
+    public double getPosition()
+    {
+        return intakeMotor.getPosition().getValueAsDouble();
     }
 }
 

@@ -19,17 +19,14 @@ import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.LimelightHelpers;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
 
-public class AlignToReefTagRelative extends Command {
+public class AlignToReefTagRelativeAlgae extends Command {
   private HolonomicDriveController holoController = new HolonomicDriveController(
     new PIDController(4, 0, 0), new PIDController(4, 0, 0), new ProfiledPIDController(0.3, 0, 0, new TrapezoidProfile.Constraints(3.14 / 2, 3.14 / 4)));
 
-  private double xSpeed, ySpeed, tSpeed;
-  private boolean isRightScore;
+  private double ySpeed;
   private CommandSwerveDrivetrain drivetrain;
   private SwerveRequest.RobotCentric robotDrive;
   private double tagID;
-  private boolean invert = false;
-  public double Freaklin = -0.62;
 
   private Pose2d robotPose;
   private Pose2d tagPose;
@@ -37,14 +34,11 @@ public class AlignToReefTagRelative extends Command {
   private AprilTagFieldLayout field;
   private double[] positions;
 
-  public AlignToReefTagRelative(boolean isRightScore, CommandSwerveDrivetrain drive, boolean inverted) {
-    xSpeed = 0;
+  public AlignToReefTagRelativeAlgae(CommandSwerveDrivetrain drive) {
     ySpeed = 0;
     field = AprilTagFieldLayout.loadField(AprilTagFields.k2025ReefscapeWelded);
     robotDrive = new SwerveRequest.RobotCentric().withDriveRequestType(DriveRequestType.OpenLoopVoltage);
 
-    this.invert = inverted;
-    this.isRightScore = isRightScore;
     this.drivetrain = drive;
 
     addRequirements(drive);
@@ -57,18 +51,8 @@ public class AlignToReefTagRelative extends Command {
     tagPose = field.getTagPose((int)tagID).get().toPose2d();
     relativePose = new Pose2d();
 
-    holoController.getThetaController().setGoal(0.1);
-    holoController.getThetaController().setTolerance(0.2);
 
-    if (isRightScore) {
-      //y controller controls left and right relative to april tag
-      holoController.getYController().setSetpoint(0.12); //0.1 //TX
-      holoController.getXController().setSetpoint(Freaklin + 0.046); //TZ
-    } else {
-      holoController.getYController().setSetpoint(-0.13); //-0.13
-      holoController.getXController().setSetpoint(Freaklin + 0.046);
-    }
-    holoController.getXController().setTolerance(-0.01);
+    holoController.getYController().setSetpoint(0); //0.1 //TX
     holoController.getYController().setTolerance(0.01);
   
     SmartDashboard.putNumber("tagIDDD", tagID);
@@ -82,19 +66,14 @@ public class AlignToReefTagRelative extends Command {
       relativePose = robotPose.relativeTo(tagPose);
 
       //tSpeed = holoController.getThetaController().calculate(positions[4]);
-      xSpeed = holoController.getXController().calculate(positions[2]);
       ySpeed = -holoController.getYController().calculate(positions[0]);
-      tSpeed = holoController.getThetaController().calculate(positions[4]);
 
       SmartDashboard.putNumber("yspee", ySpeed);
       SmartDashboard.putNumber("y pos", positions[0]);
-      SmartDashboard.putNumber("pos 1", positions[1]);
-      SmartDashboard.putNumber("pos 4", positions[4]);
-      SmartDashboard.putNumber("xspee", ySpeed);
-      SmartDashboard.putNumber("x pos", positions[2]);
+
 
       drivetrain.setControl(
-        robotDrive.withVelocityY(ySpeed).withVelocityX(xSpeed)
+        robotDrive.withVelocityY(ySpeed)
       );
 
     } else {
